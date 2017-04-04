@@ -52,5 +52,23 @@
         android:layout_marginTop="42dp"
         android:text="Switch" />
 
+    <Button
+        android:id="@+id/submitButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/langSwitch"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="70dp"
+        android:text="Button" />
+
+    <TextView
+        android:id="@+id/response"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/submitButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="67dp"
+        android:text="TextView" />
+
 
 </RelativeLayout>

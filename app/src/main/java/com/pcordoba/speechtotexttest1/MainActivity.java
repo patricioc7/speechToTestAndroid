@@ -11,6 +11,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -19,28 +20,33 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import retrofit2.*;
+import retrofit2.http.POST;
 
 @RequiresApi(api = Build.VERSION_CODES.FROYO)
 public class MainActivity extends Activity implements
         RecognitionListener {
 
     private TextView returnedText;
+    private TextView responseText;
 
+    private Button submitButton;
     private Button button;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
     private Switch langSwitch;
     private String lang;
-
+    private int i = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         returnedText = (TextView) findViewById(R.id.resultMessage);
+        responseText = (TextView) findViewById(R.id.response);
         langSwitch = (Switch) findViewById(R.id.langSwitch);
         button = (Button) findViewById(R.id.mantener);
-
+        submitButton = (Button) findViewById(R.id.submitButton);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
         lang = "es-AR";
@@ -99,6 +105,15 @@ public class MainActivity extends Activity implements
                 return false;
             }
         });
+        submitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String message = "No Mandé una garcha";
+                 i++;
+                showResponse(message + i);
+
+            }
+        });
     }
 
     private void createSpeech() {
@@ -148,6 +163,8 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onError(int errorCode) {
+        progressBar.setIndeterminate(false);
+        progressBar.setVisibility(View.INVISIBLE);
         String errorMessage = getErrorText(errorCode);
         returnedText.setText(errorMessage);
     }
@@ -221,6 +238,14 @@ public class MainActivity extends Activity implements
                 break;
         }
         return message;
+    }
+
+    public void showResponse(String response) {
+        if(responseText.
+                getVisibility() == View.GONE) {
+            responseText.setVisibility(View.VISIBLE);
+        }
+        responseText.setText(response);
     }
 
 }

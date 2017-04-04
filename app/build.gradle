@@ -4,7 +4,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
-        applicationId "com.pcordoba.speechtotexttest1"
+        applicationId "com.pcordoba.speechtotexttest2"
         minSdkVersion 15
         targetSdkVersion 25
         versionCode 1
@@ -27,7 +27,14 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.google.code.gson:gson:2.7'
+    // Retrofit
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
+
+    // JSON Parsing
+    compile 'com.google.code.gson:gson:2.6.1'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.2.1'
+
     testCompile 'junit:junit:4.12'
 }

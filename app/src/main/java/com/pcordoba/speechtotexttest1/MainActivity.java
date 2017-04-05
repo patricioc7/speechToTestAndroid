@@ -1,17 +1,18 @@
 package com.pcordoba.speechtotexttest1;
 
 
-import java.util.ArrayList;
-import java.util.Map;
-
+import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -20,18 +21,21 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 
-
+import static android.R.attr.permission;
 
 @RequiresApi(api = Build.VERSION_CODES.FROYO)
 public class MainActivity extends Activity implements
@@ -47,7 +51,14 @@ public class MainActivity extends Activity implements
     private Intent recognizerIntent;
     private Switch langSwitch;
     private String lang;
-    private int i = 0;
+
+    final private String SPANISH = "es-AR";
+    final private String ENGLISH = "en";
+    final private String ESPANOL = "Español";
+    final private String INGLES = "English";
+
+    final private int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,29 +70,31 @@ public class MainActivity extends Activity implements
         submitButton = (Button) findViewById(R.id.submitButton);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
-        lang = "es-AR";
+        lang = SPANISH;
+
         langSwitch.setChecked(true);
-        langSwitch.setText("Español");
+        langSwitch.setText(ESPANOL);
+
+
 
         createSpeech();
 
         langSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
             @Override
-            public void onCheckedChanged(CompoundButton buttonView,
-                                         boolean isChecked) {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
                 if (speech != null) {
                     speech.destroy();
                     createSpeech();
                 }
 
-                if(isChecked){
-                    langSwitch.setText("Español");
-                    lang = "es-AR";
-                }else{
-                    langSwitch.setText("English");
-                    lang = "en";
+                if (isChecked) {
+                    langSwitch.setText(ESPANOL);
+                    lang = SPANISH;
+                } else {
+                    langSwitch.setText(INGLES);
+                    lang = ENGLISH;
                 }
 
                 if (speech != null) {
@@ -95,8 +108,9 @@ public class MainActivity extends Activity implements
         button.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()){
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        askForPermission();
                         progressBar.setVisibility(View.VISIBLE);
                         progressBar.setIndeterminate(true);
                         if (speech != null) {
@@ -114,17 +128,39 @@ public class MainActivity extends Activity implements
                 }
                 return false;
             }
+
+            private void askForPermission() {
+
+                    String permission = "android.permission.RECORD_AUDIO";
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, permission) != PackageManager.PERMISSION_GRANTED) {
+
+                        // Should we show an explanation?
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permission)) {
+
+                            //This is called if user has denied the permission before
+                            //In this case I am just asking the permission again
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, 1);
+
+                        } else {
+
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, 1);
+                        }
+                    } else {
+                    }
+                }
+
+
+
         });
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                requestSomething();
-               // String message = "No Mandé una garcha";
-                // i++;
-                //showResponse(message + i);
-
+                requestSomething("tu vieja");
             }
         });
+        // Here, thisActivity is the current activity
+
+
     }
 
     private void createSpeech() {
@@ -145,7 +181,6 @@ public class MainActivity extends Activity implements
         if (speech == null) {
             createSpeech();
         }
-
     }
 
     @Override
@@ -154,7 +189,6 @@ public class MainActivity extends Activity implements
         if (speech != null) {
             speech.destroy();
         }
-
     }
 
     @Override
@@ -201,10 +235,11 @@ public class MainActivity extends Activity implements
         /*for (String result : matches)
             text += result + "\n";
         */
-        if(matches.size() >= 1){
+        if (matches.size() >= 1) {
             text = matches.get(1);
             returnedText.setText(text);
-        }else{
+            requestSomething(text);
+        } else {
             returnedText.setText("nop");
         }
     }
@@ -251,45 +286,34 @@ public class MainActivity extends Activity implements
         return message;
     }
 
-    public void showResponse(String response) {
-        if(responseText.
-                getVisibility() == View.GONE) {
-            responseText.setVisibility(View.VISIBLE);
-        }
-        responseText.setText(response);
-    }
-    public void requestSomething() {
-        final String url = "http://demo9721303.mockable.io/";
+    public void requestSomething(String text) {
+
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url ="http://192.168.43.156:8087/Guestbook/sendMessage";
         JSONObject jsonBody = null;
         try {
-            jsonBody = new JSONObject("{\"message\":\"tuvieja\"}");
+            jsonBody = new JSONObject("{\"message\":\""+text+"\"}");
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        new JsonObjectRequest(Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>() {
+        JsonObjectRequest jsonRequest =new JsonObjectRequest(Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>(){
             @Override
             public void onResponse(JSONObject response) {
-                responseText.setText("Response is: CORRECTO" + response.toString());
+                // Display the first 500 characters of the response string.
+                responseText.setText("Response is: "+ response);
             }
-        },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        responseText.setText("Response is: ERROR"+ error.toString());
-                    }
-                })
-        {
+                }, new Response.ErrorListener() {
             @Override
-            protected Map<String,String> getParams() {
-                // something to do here ??
-                return null;
+            public void onErrorResponse(VolleyError error) {
+                responseText.setText("BAD REQUEST!");
             }
-
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                return null;
-            }
+        }){
         };
+
+        queue.add(jsonRequest);
+
     }
+
+
 }

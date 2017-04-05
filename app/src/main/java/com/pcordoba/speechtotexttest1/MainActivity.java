@@ -2,6 +2,7 @@ package com.pcordoba.speechtotexttest1;
 
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import android.os.Build;
 import android.speech.RecognitionListener;
@@ -11,7 +12,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -20,8 +20,18 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
-import retrofit2.*;
-import retrofit2.http.POST;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
+
 
 @RequiresApi(api = Build.VERSION_CODES.FROYO)
 public class MainActivity extends Activity implements
@@ -108,9 +118,10 @@ public class MainActivity extends Activity implements
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String message = "No Mandé una garcha";
-                 i++;
-                showResponse(message + i);
+                requestSomething();
+               // String message = "No Mandé una garcha";
+                // i++;
+                //showResponse(message + i);
 
             }
         });
@@ -247,5 +258,38 @@ public class MainActivity extends Activity implements
         }
         responseText.setText(response);
     }
+    public void requestSomething() {
+        final String url = "http://demo9721303.mockable.io/";
+        JSONObject jsonBody = null;
+        try {
+            jsonBody = new JSONObject("{\"message\":\"tuvieja\"}");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
+        new JsonObjectRequest(Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                responseText.setText("Response is: CORRECTO" + response.toString());
+            }
+        },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        responseText.setText("Response is: ERROR"+ error.toString());
+                    }
+                })
+        {
+            @Override
+            protected Map<String,String> getParams() {
+                // something to do here ??
+                return null;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return null;
+            }
+        };
+    }
 }

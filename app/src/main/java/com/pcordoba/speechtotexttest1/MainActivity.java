@@ -1,7 +1,6 @@
 package com.pcordoba.speechtotexttest1;
 
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,7 +20,6 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -35,8 +33,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import static android.R.attr.permission;
-
 @RequiresApi(api = Build.VERSION_CODES.FROYO)
 public class MainActivity extends Activity implements
         RecognitionListener {
@@ -44,7 +40,8 @@ public class MainActivity extends Activity implements
     private TextView returnedText;
     private TextView responseText;
 
-    private Button submitButton;
+
+   // private Button submitButton;
     private Button button;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
@@ -67,7 +64,7 @@ public class MainActivity extends Activity implements
         responseText = (TextView) findViewById(R.id.response);
         langSwitch = (Switch) findViewById(R.id.langSwitch);
         button = (Button) findViewById(R.id.mantener);
-        submitButton = (Button) findViewById(R.id.submitButton);
+       // submitButton = (Button) findViewById(R.id.mantener);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
         lang = SPANISH;
@@ -152,12 +149,7 @@ public class MainActivity extends Activity implements
 
 
         });
-        submitButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                requestSomething("tu vieja");
-            }
-        });
+
         // Here, thisActivity is the current activity
 
 

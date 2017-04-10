@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+
     tools:context="com.pcordoba.speechtotexttest1.MainActivity">
 
 
@@ -11,12 +12,14 @@
         android:id="@+id/mantener"
         android:layout_width="151dp"
         android:layout_height="135dp"
-        android:layout_marginBottom="9dp"
+        android:layout_marginBottom="0dp"
         android:background="@drawable/button_image_mic"
         app:layout_constraintBottom_toTopOf="@+id/editText"
-        app:layout_constraintHorizontal_bias="0.905"
+        app:layout_constraintHorizontal_bias="0.502"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginRight="8dp"
+        android:layout_marginLeft="8dp" />
 
     <EditText
         android:id="@+id/editText"
@@ -86,19 +89,4 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
-    <Switch
-        android:id="@+id/langSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:text="Switch"
-        app:layout_constraintHorizontal_bias="0.666"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/mantener"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/editText"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@+id/progressBar"
-        app:layout_constraintVertical_bias="0.728" />
 </android.support.constraint.ConstraintLayout>

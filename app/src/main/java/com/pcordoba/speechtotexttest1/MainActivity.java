@@ -3,17 +3,25 @@ package com.pcordoba.speechtotexttest1;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -34,7 +42,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 @RequiresApi(api = Build.VERSION_CODES.FROYO)
-public class MainActivity extends Activity implements
+public class MainActivity extends ActionBarActivity implements
         RecognitionListener {
 
     private TextView returnedText;
@@ -48,11 +56,13 @@ public class MainActivity extends Activity implements
     private Intent recognizerIntent;
     private Switch langSwitch;
     private String lang;
+    private String restUrl;
+    private String restPort;
 
     final private String SPANISH = "es-AR";
     final private String ENGLISH = "en";
-    final private String ESPANOL = "Español";
-    final private String INGLES = "English";
+
+    private SharedPreferences SP;
 
     final private int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
 
@@ -62,45 +72,23 @@ public class MainActivity extends Activity implements
         setContentView(R.layout.activity_main);
         returnedText = (TextView) findViewById(R.id.resultMessage);
         responseText = (TextView) findViewById(R.id.response);
-        langSwitch = (Switch) findViewById(R.id.langSwitch);
         button = (Button) findViewById(R.id.mantener);
        // submitButton = (Button) findViewById(R.id.mantener);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
-        lang = SPANISH;
-
-        langSwitch.setChecked(true);
-        langSwitch.setText(ESPANOL);
 
 
+        SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+
+        setLanguage();
+
+        //"http://192.168.43.156:8087/Guestbook/sendMessage";
+        restUrl = SP.getString("restUrl", "192.168.43.156");
+        restPort = SP.getString("restPort", "8087Guestbook/sendMessage");
+
+        setTitle("Control por voz");
 
         createSpeech();
-
-        langSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                if (speech != null) {
-                    speech.destroy();
-                    createSpeech();
-                }
-
-                if (isChecked) {
-                    langSwitch.setText(ESPANOL);
-                    lang = SPANISH;
-                } else {
-                    langSwitch.setText(INGLES);
-                    lang = ENGLISH;
-                }
-
-                if (speech != null) {
-                    speech.destroy();
-                    createSpeech();
-                }
-
-            }
-        });
 
         button.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -111,7 +99,6 @@ public class MainActivity extends Activity implements
                         progressBar.setVisibility(View.VISIBLE);
                         progressBar.setIndeterminate(true);
                         if (speech != null) {
-                            speech.destroy();
                             createSpeech();
                         }
                         speech.startListening(recognizerIntent);
@@ -125,7 +112,6 @@ public class MainActivity extends Activity implements
                 }
                 return false;
             }
-
             private void askForPermission() {
 
                     String permission = "android.permission.RECORD_AUDIO";
@@ -150,12 +136,47 @@ public class MainActivity extends Activity implements
 
         });
 
-        // Here, thisActivity is the current activity
+    }
 
+    private void setLanguage() {
+        String chota = SP.getString("lang", "");
+        if("1".equals(SP.getString("lang", ""))){
+            lang = SPANISH;
+        }else{
+            lang = ENGLISH;
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
 
     }
 
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.menu_item_new_thingy:
+                //Toast.makeText(this, "ADD!", Toast.LENGTH_SHORT).show();
+                Intent i = new Intent(this, CustomPreferenceActivity.class);
+                startActivity(i);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+
+
     private void createSpeech() {
+        if (speech != null) {
+            speech.destroy();
+        }
+        setLanguage();
         speech = SpeechRecognizer.createSpeechRecognizer(this);
         speech.setRecognitionListener(this);
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -224,16 +245,17 @@ public class MainActivity extends Activity implements
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         String text = "";
-        /*for (String result : matches)
+        for (String result : matches)
             text += result + "\n";
-        */
-        if (matches.size() >= 1) {
+            returnedText.setText(text);
+            requestSomething(text);
+        /*if (matches.size() >= 1) {
             text = matches.get(1);
             returnedText.setText(text);
             requestSomething(text);
         } else {
             returnedText.setText("nop");
-        }
+        }*/
     }
 
     @Override
@@ -281,7 +303,7 @@ public class MainActivity extends Activity implements
     public void requestSomething(String text) {
 
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://192.168.43.156:8087/Guestbook/sendMessage";
+        String url = "http://" + restUrl + restPort;
         JSONObject jsonBody = null;
         try {
             jsonBody = new JSONObject("{\"message\":\""+text+"\"}");
@@ -289,7 +311,7 @@ public class MainActivity extends Activity implements
             e.printStackTrace();
         }
 
-        JsonObjectRequest jsonRequest =new JsonObjectRequest(Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>(){
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>(){
             @Override
             public void onResponse(JSONObject response) {
                 // Display the first 500 characters of the response string.
@@ -306,6 +328,5 @@ public class MainActivity extends Activity implements
         queue.add(jsonRequest);
 
     }
-
 
 }

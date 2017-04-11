@@ -1,7 +1,6 @@
 package com.pcordoba.speechtotexttest1;
 
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -13,31 +12,16 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBarActivity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
-import android.widget.Switch;
 import android.widget.TextView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -45,20 +29,16 @@ import java.util.ArrayList;
 public class MainActivity extends ActionBarActivity implements
         RecognitionListener {
 
+    private RestPoster restPoster = new RestPoster(this);
     private TextView returnedText;
     private TextView responseText;
-
-
-   // private Button submitButton;
     private Button button;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
-    private Switch langSwitch;
     private String lang;
     private String restUrl;
     private String restPort;
-
     final private String SPANISH = "es-AR";
     final private String ENGLISH = "en";
 
@@ -73,18 +53,11 @@ public class MainActivity extends ActionBarActivity implements
         returnedText = (TextView) findViewById(R.id.resultMessage);
         responseText = (TextView) findViewById(R.id.response);
         button = (Button) findViewById(R.id.mantener);
-       // submitButton = (Button) findViewById(R.id.mantener);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
-
         SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-
         setLanguage();
-
-        //"http://192.168.43.156:8087/Guestbook/sendMessage";
-        restUrl = SP.getString("restUrl", "192.168.43.156");
-        restPort = SP.getString("restPort", "8087Guestbook/sendMessage");
 
         setTitle("Control por voz");
 
@@ -116,12 +89,8 @@ public class MainActivity extends ActionBarActivity implements
 
                     String permission = "android.permission.RECORD_AUDIO";
                     if (ContextCompat.checkSelfPermission(MainActivity.this, permission) != PackageManager.PERMISSION_GRANTED) {
-
-                        // Should we show an explanation?
                         if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permission)) {
 
-                            //This is called if user has denied the permission before
-                            //In this case I am just asking the permission again
                             ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, 1);
 
                         } else {
@@ -131,37 +100,41 @@ public class MainActivity extends ActionBarActivity implements
                     } else {
                     }
                 }
-
-
-
         });
-
     }
 
-    private void setLanguage() {
-        String chota = SP.getString("lang", "");
-        if("1".equals(SP.getString("lang", ""))){
-            lang = SPANISH;
-        }else{
-            lang = ENGLISH;
+
+    @Override
+    public void onResults(Bundle results) {
+        ArrayList<String> matches = results
+                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        String text = "";
+        restUrl = SP.getString("restUrl", "192.168.43.156");
+        restPort = SP.getString("restPort", "8087/Guestbook/sendMessage");
+
+        restPoster.postVoiceResult(matches, restUrl, restPort, this);
+
+        if (matches.size() >= 1) {
+            text = matches.get(1);
+            returnedText.setText(text);
+        } else {
+            returnedText.setText("Listening Service Error");
         }
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
 
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
             case R.id.menu_item_new_thingy:
-                //Toast.makeText(this, "ADD!", Toast.LENGTH_SHORT).show();
                 Intent i = new Intent(this, CustomPreferenceActivity.class);
                 startActivity(i);
                 return true;
@@ -170,7 +143,6 @@ public class MainActivity extends ActionBarActivity implements
         }
 
     }
-
 
     private void createSpeech() {
         if (speech != null) {
@@ -219,48 +191,19 @@ public class MainActivity extends ActionBarActivity implements
         progressBar.setIndeterminate(true);
     }
 
+    private void setLanguage() {
+        if("1".equalsIgnoreCase(SP.getString("lang", "1"))){
+            lang = SPANISH;
+        }else{
+            lang = ENGLISH;
+        }
+    }
     @Override
     public void onError(int errorCode) {
         progressBar.setIndeterminate(false);
         progressBar.setVisibility(View.INVISIBLE);
         String errorMessage = getErrorText(errorCode);
         returnedText.setText(errorMessage);
-    }
-
-    @Override
-    public void onEvent(int arg0, Bundle arg1) {
-    }
-
-    @Override
-    public void onPartialResults(Bundle arg0) {
-
-    }
-
-    @Override
-    public void onReadyForSpeech(Bundle arg0) {
-    }
-
-    @Override
-    public void onResults(Bundle results) {
-        ArrayList<String> matches = results
-                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        String text = "";
-        for (String result : matches)
-            text += result + "\n";
-            returnedText.setText(text);
-            requestSomething(text);
-        /*if (matches.size() >= 1) {
-            text = matches.get(1);
-            returnedText.setText(text);
-            requestSomething(text);
-        } else {
-            returnedText.setText("nop");
-        }*/
-    }
-
-    @Override
-    public void onRmsChanged(float rmsdB) {
-        progressBar.setProgress((int) rmsdB);
     }
 
     public static String getErrorText(int errorCode) {
@@ -300,33 +243,18 @@ public class MainActivity extends ActionBarActivity implements
         return message;
     }
 
-    public void requestSomething(String text) {
-
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url = "http://" + restUrl + restPort;
-        JSONObject jsonBody = null;
-        try {
-            jsonBody = new JSONObject("{\"message\":\""+text+"\"}");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, url, jsonBody, new Response.Listener<JSONObject>(){
-            @Override
-            public void onResponse(JSONObject response) {
-                // Display the first 500 characters of the response string.
-                responseText.setText("Response is: "+ response);
-            }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                responseText.setText("BAD REQUEST!");
-            }
-        }){
-        };
-
-        queue.add(jsonRequest);
+    @Override
+    public void onEvent(int arg0, Bundle arg1) {
+    }
+    @Override
+    public void onPartialResults(Bundle arg0) {
 
     }
-
+    @Override
+    public void onReadyForSpeech(Bundle arg0) {
+    }
+    @Override
+    public void onRmsChanged(float rmsdB) {
+        progressBar.setProgress((int) rmsdB);
+    }
 }
